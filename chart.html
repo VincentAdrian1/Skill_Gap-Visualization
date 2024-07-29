@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills by Department Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            text-align: center;
+        }
+
+        #skillsChart {
+            margin: 20px auto;
+            max-width: 800px;
+            max-height: 400px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px auto;
+            border: 1px solid #dddddd;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="skillsChart"></canvas>
+
+    <script>
+        fetch('query.php')
+            .then(response => response.json())
+            .then(data => {
+                const departments = [...new Set(data.map(item => item.department))];
+                const skills = [...new Set(data.map(item => item.skill_name))];
+                
+                const datasets = skills.map((skill, index) => {
+                    return {
+                        label: skill,
+                        data: departments.map(department => {
+                            const item = data.find(d => d.department === department && d.skill_name === skill);
+                            return item ? item.count : 0;
+                        }),
+                        backgroundColor: `rgba(${index * 40}, ${index * 50}, 150, 0.5)`,
+                        borderColor: `rgba(${index * 40}, ${index * 50}, 150, 1)`,
+                        borderWidth: 1
+                    };
+                });
+
+                const ctx = document.getElementById('skillsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: departments,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(tooltipItem) {
+                                        return `Count: ${tooltipItem.raw}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+</html>
